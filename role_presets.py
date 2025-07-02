@@ -8,9 +8,9 @@ ROLE_PRESETS = [
         "1st_night_div": False,
         "draw": False,
         "day_time": 240,
-        "vote_time": 60,
+        "vote_time": 90,
         "revote_time": 0,
-        "night_time": 30
+        "night_time": 60
     },
     {
         "name": "4O",
@@ -21,9 +21,9 @@ ROLE_PRESETS = [
         "1st_night_div": False,
         "draw": False,
         "day_time": 300,
-        "vote_time": 60,
+        "vote_time": 90,
         "revote_time": 0,
-        "night_time": 30
+        "night_time": 60
     },
     {
         "name": "5O",
@@ -34,9 +34,9 @@ ROLE_PRESETS = [
         "1st_night_div": False,
         "draw": False,
         "day_time": 360,
-        "vote_time": 60,
+        "vote_time": 90,
         "revote_time": 0,
-        "night_time": 30
+        "night_time": 60
     },
     {
         "name": "6O",
@@ -47,9 +47,9 @@ ROLE_PRESETS = [
         "1st_night_div": False,
         "draw": False,
         "day_time": 420,
-        "vote_time": 60,
+        "vote_time": 90,
         "revote_time": 0,
-        "night_time": 30
+        "night_time": 60
     },
     {
         "name": "7A",
