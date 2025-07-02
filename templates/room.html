@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ルーム {{ room_id }}</title>
+</head>
+<body>
+    <!-- 5秒ごとに自動リロード
+    <meta http-equiv="refresh" content="5">-->
+    <h2>ルームID: {{ room_id }}</h2>
+    <p>参加者: {{ members|length }} / {{ max_players }}人</p>
+    <h3>参加者リスト</h3>
+    <ul>
+        {% for member in members %}
+            <li>{{ member }}</li>
+        {% endfor %}
+    </ul>
+
+    {% if is_gm and phase == "waiting" %}
+        <form method="post">
+            <button type="submit">ゲーム開始</button>
+        </form>
+    {% endif %}
+    {% if roles %}
+        <h3>あなたの役職</h3>
+        <p>{{ roles[session['username']] }}</p>
+    {% endif %}
+
+    <!--{% if msg %}
+        <p>{{ msg }}</p>
+    {% endif %}-->
+
+    {% if phase == "night" %}
+        <h2>夜フェーズ</h2>
+        <p>夜になりました。</p>
+        <div>夜フェーズ残り時間: <span id="night-timer">{{ night_time_left }}</span>秒</div>
+        <!--<p>DEBUG: night_time_left = {{ night_time_left }}</p>-->
+            <script>
+                // 1秒ごとにカウントダウン表示
+                let t_night = {{ night_time_left }};
+                let timer_night = setInterval(function() {
+                    if (t_night > 0) {
+                        t_night--;
+                        document.getElementById("night-timer").textContent = t_night;
+                    }
+                }, 1000);
+                setTimeout(function(){
+                    location.reload();
+                }, (t_night + 1) * 1000);
+            </script>
+
+        <!-- 占い師の行動 -->
+        {% if roles[session['username']] == "占い師" %}
+            {% if not night_actions[session['username']] %}
+                <form method="post">
+                    <label>占う相手を選択：</label>
+                    <select name="fortune_target" required>
+                        {% for member in members %}
+                            {% if member != session['username'] %}
+                                <option value="{{ member }}">{{ member }}</option>
+                            {% endif %}
+                        {% endfor %}
+                        <option value ="extra">余り役職2枚</option>
+                    </select>
+                    <button type="submit" name="action" value="fortune">占う</button>
+                </form>
+            {% else %}
+                <div><b>占い結果：</b>{{ night_actions[session['username']] }}</div>
+            {% endif %}
+        {% endif %}
+
+        <!-- 占い師の結果表示
+        {% if roles[session['username']] == "占い師" %}
+            {% if night_actions[session['username']] %}
+                <div><b>占い結果：</b>{{ night_actions[session['username']] }}</div>
+            {% endif %}
+        {% endif %} -->
+
+        <!-- 怪盗の行動 -->
+        {% if roles[session['username']] == "怪盗" %}
+            {% if not night_actions[session['username']] %}
+                <form method="post">
+                    <label>交換する相手を選択：</label>
+                    <select name="kaitou_target" required>
+                        {% for member in members %}
+                            {% if member != session['username'] %}
+                                <option value="{{ member }}">{{ member }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                    <button type="submit" name="action" value="kaitou">交換</button>
+                </form>
+            {% else %}
+                <div><b>交換結果：</b>{{ night_actions[session['username']] }}</div>
+            {% endif %}
+        {% endif %}
+
+        <!-- 怪盗の結果表示
+        {% if roles[session['username']] == "怪盗" %}
+            {% if night_actions[session['username']] %}
+                <div><b>交換結果：</b>{{ night_actions[session['username']] }}</div>
+            {% endif %}
+        {% endif %} -->
+
+        <!-- 人狼の相方表示と赤チャット
+        {% if roles[session['username']] == "人狼" %}
+            <h3>人狼の相方</h3>
+            <ul>
+                {% for member, role in roles.items() %}
+                    {% if member != session ['username'] and role == "人狼" %}
+                        <li>{{ member }}</li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+            <h3 style="color: red;">赤チャット</h3>
+            <div style="border: 1px solid #f00; padding:8px; margin-bottom:8px;">
+                {% for chat in red_chat %}
+                    <div style="color: red;"><b>{{ chat.sender }}:</b> {{ chat.text }}</div>
+                {% endfor %}
+            </div>
+            <form method="post">
+                <input type="text" name="red_chat_message" placeholder="赤チャットを入力" required>
+                <button type="submit" name="action" value="red_chat">送信</button>
+            </form>
+        {% endif %}-->
+
+        {% if roles[session['username']] == "人狼" %}
+            <h3>人狼の相方</h3>
+            <ul>
+                {% for member, role in roles.items() %}
+                    {% if member != session ['username'] and role == "人狼" %}
+                        <li>{{ member }}</li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+            <div id="red-chat-box">
+                <!-- ここにチャット内容が動的に入る -->
+            </div>
+            <form id="red-chat-form">
+                <input type="text" id="red-chat-input" placeholder="赤チャットを入力" required>
+                <button type="submit">送信</button>
+            </form>
+            <script>
+            const roomId = "{{ room_id }}";
+
+            // チャット取得
+            function loadRedChat() {
+                fetch(`/room/${roomId}/red_chat`)
+                    .then(res => res.json())
+                    .then(data => {
+                        let html = "";
+                        data.forEach(chat => {
+                            html += `<div style="color:red;"><b>${chat.sender}:</b> ${chat.text}</div>`;
+                        });
+                        document.getElementById("red-chat-box").innerHTML = html;
+                    });
+            }
+
+            // チャット送信
+            document.getElementById("red-chat-form").addEventListener("submit", function(e){
+                e.preventDefault();
+                const msg = document.getElementById("red-chat-input").value;
+                fetch(`/room/${roomId}/red_chat`, {
+                    method: "POST",
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({message: msg})
+                }).then(res => {
+                    if (res.ok) {
+                        document.getElementById("red-chat-input").value = "";
+                        loadRedChat();
+                    }
+                });
+            });
+
+            // 3秒ごとにチャットだけ更新
+            setInterval(loadRedChat, 3000);
+            window.onload = loadRedChat;
+            </script>
+        {% endif %}
+    {% endif %}
+
+    {% if phase == "day" %}
+        <h2>昼フェーズ</h2>
+        <p>昼になりました。</p>
+        <div>議論時間残り: <span id="day-timer">{{ day_time_left }}</span>秒</div>
+        <script>
+            let t_day = {{ day_time_left }};
+            let timer_day = setInterval(function() {
+                if (t_day > 0) {
+                    t_day--;
+                    document.getElementById("day-timer").textContent = t_day;
+                }
+            }, 1000);
+            setTimeout(function(){
+                location.reload();
+            }, (t_day + 1) * 1000); // ディレイ込みで1回だけリロード
+        </script>
+    {% endif %}
+
+    {% if phase == "vote" %}
+        <h2>投票フェーズ</h2>
+        <p>投票の時間です。</p>
+        <div>投票時間残り: <span id="vote-timer">{{ vote_time_left }}</span>秒</div>
+
+        <!--{# フラッシュメッセージは投票フェーズの先頭で必ず表示 #}-->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% if not session['username'] in votes %}
+            <form method="post">
+                <label>投票する相手を選んでください：</label>
+                <select name="vote_target" required>
+                    {% for member in members %}
+                        {% if member != session['username'] %}
+                            <option value="{{ member }}">{{ member }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+                <button type="submit" name="action" value="vote">投票</button>
+            </form>
+        {% endif %}
+        <script>
+            let t_vote = {{ vote_time_left }};
+            let timer_vote = setInterval(function() {
+                if (t_vote > 0) {
+                    t_vote--;
+                    document.getElementById("vote-timer").textContent = t_vote;
+                }
+            }, 1000);
+            setTimeout(function(){
+                location.reload();
+            }, (t_vote + 1) * 1000);
+        </script>
+    {% endif %}
+
+    {% if phase == "result" %}
+        <h3>得票数</h3>
+        <ul>
+        {% for member, count in vote_counts.items() %}
+            <li>{{ member }}: {{ count }}票</li>
+        {% endfor %}
+        </ul>
+        {% if executed %}
+            <p>
+            {% for name in executed %}
+                {{ name }}さんは処刑されました（役職：{{ roles[name] }}）<br>
+            {% endfor %}
+            </p>
+        {% else %}
+            <p>誰も処刑されませんでした。</p>
+        {% endif %}
+        <h2>結果</h2>
+        <p>{{ result_msg }}</p>
+        <h3>勝者：</h3>
+        <ul>
+        {% for name, role in winners %}
+            <li>{{ name }}（{{ role }}）</li>
+        {% endfor %}
+        </ul>
+        <h3>敗者：</h3>
+        <ul>
+        {% for name, role in losers %}
+            <li>{{ name }}（{{ role }}）</li>
+        {% endfor %}
+        </ul>
+        <h3>余り役職：</h3>
+        <ul>
+        {% for role in extra_roles %}
+            <li>{{ role }}</li>
+        {% endfor %}
+        </ul>
+        <form action="{{ url_for('create_or_join') }}">
+            <button type="submit">マイページへ戻る</button>
+        </form>
+    {% endif %}
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>人狼コミュニティサービス（仮称）</title>
+</head>
+<body>
+    <h1>人狼コミュニティサービス（仮称）</h1>
+    <p>
+        本サービスでは、仲間と通話しながらオンライン上で人狼ゲームを遊ぶことができます。<br>
+        所属するコミュニティごとにアカウントを作成して遊ぶことができ、自動でゲームを進行します。<br>
+        現在、開発初期のテスト段階のため3～6人で遊ぶワンナイト人狼のみ実装されています。<br>
+    </p>
+    <hr>
+    <form action="{{ url_for('register') }}" method="get" style="display:inline;">
+        <button type="submit">新規登録</button>
+    </form>
+    <form action="{{ url_for('login') }}" method="get" style="display:inline;">
+        <button type="submit">ログイン</button>
+    </form>
+    <hr>
+    <h3>主な特徴</h3>
+    <ul>
+        <li>コミュニティごとにアカウント登録、自動でゲーム進行</li>
+        <li>戦績・レート・ランキング機能や多様な役職を実装予定</li>
+        <li>通常の人狼ゲームも鋭意開発中！</li>
+    </ul>
+    <hr>
+    <h3>実装済み配役リスト</h3>
+    <p>
+        3O：村占怪狼狼<br>
+        4O：村村占怪狼狂<br>
+        5O：村村村占怪狼狼<br>
+        6O：村村占占怪狼狼狂<br>
+        ※これら以外の配役を選んでも動作しません。
+    <hr>
+    <p>
+        2025.07.02  ワンナイト人狼をテスト公開
+    </p>
+</body>
+</html>

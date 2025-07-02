@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ルーム作成</title>
+</head>
+<body>
+    <h2>ルーム作成</h2>
+    <form method="post">
+        <label for="role_presets">配役を選択してください:</label>
+        <select name="role_presets" id="role_presets" required>
+            {% for preset in role_presets %}
+                <option value="{{ preset.name }}">
+                    {{ preset.name }}（{{ preset.num_players }}人, {{ "ワンナイト" if preset.type == "1night" else "通常" }}）
+                </option>
+            {% endfor %}
+        </select>
+        <br><br>
+        <button type="submit">ルームを作成する</button>
+    </form>
+</body>
+</html>
