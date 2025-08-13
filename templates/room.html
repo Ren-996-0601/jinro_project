@@ -4,6 +4,36 @@
     <meta charset="UTF-8">
     <title>ルーム {{ room_id }}</title>
 </head>
+
+<div id="connecting-status" style="display:none; color:#666; margin-top:12px;">
+  接続中…（画面切替を待っています）
+</div>
+<script>
+  function checkAndReload(roomId) {
+    // 「接続中…」表示
+    const statusEl = document.getElementById("connecting-status");
+    if (statusEl) statusEl.style.display = "block";
+
+    fetch(`/room/${roomId}/status`, { cache: "no-store" })
+      .then(res => {
+        if (!res.ok) throw new Error("status not ok");
+        return res.json();
+      })
+      .then(js => {
+        if (js.ok) {
+          // 状態OKなら画面リロード
+          location.reload();
+        } else {
+          throw new Error("status json not ok");
+        }
+      })
+      .catch(_ => {
+        // 少し待って再試行
+        setTimeout(() => checkAndReload(roomId), 1000);
+      });
+  }
+</script>
+
 <body>
     <!-- 5秒ごとに自動リロード
     <meta http-equiv="refresh" content="5">-->
@@ -45,7 +75,7 @@
                     }
                 }, 1000);
                 setTimeout(function(){
-                    location.reload();
+                    checkAndReload("{{ room_id }}");
                 }, (t_night + 1) * 1000);
             </script>
 
@@ -192,7 +222,7 @@
                 }
             }, 1000);
             setTimeout(function(){
-                location.reload();
+                checkAndReload("{{ room_id }}");
             }, (t_day + 1) * 1000); // ディレイ込みで1回だけリロード
         </script>
     {% endif %}
@@ -233,7 +263,7 @@
                 }
             }, 1000);
             setTimeout(function(){
-                location.reload();
+                checkAndReload("{{ room_id }}");
             }, (t_vote + 1) * 1000);
         </script>
     {% endif %}
@@ -278,5 +308,26 @@
             <button type="submit">マイページへ戻る</button>
         </form>
     {% endif %}
+
+    <script>
+        (function(){
+            try {
+                // URLのクエリパラメータを取得
+                const params = new URLSearchParams(location.search);
+                // from=post が付いている場合は、送信直後と判定
+                if (params.get('from') === 'post') {
+                    // 接続中表示をONにして状態確認
+                    checkAndReload("{{ room_id }}");
+                    // クエリパラメータを削除（F5でループしない）
+                    const url = new URL(location.href);
+                    url.searchParams.delete('from');
+                    history.replaceState(null, "", url.toString());
+                }
+            } catch(e) {
+                console.error(e);
+            }
+        })();
+    </script>
+
 </body>
 </html>

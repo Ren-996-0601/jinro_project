@@ -7,8 +7,8 @@ ROLE_PRESETS = [
         "missing_role": False,
         "1st_night_div": False,
         "draw": False,
-        "day_time": 240,
-        "vote_time": 90,
+        "day_time": 30,
+        "vote_time": 60,
         "revote_time": 0,
         "night_time": 60
     },

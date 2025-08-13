@@ -136,7 +136,7 @@ from collections import Counter
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
-COMMUNITIES = ['kozoji_jh']  # テスト用コミュニティ名
+COMMUNITIES = ['test_com']  # テスト用コミュニティ名
 users = []
 rooms = {}  # room_id: {"members": [usernames], "gm": username, "role_presets": preset, "community": community_name}
 
@@ -319,7 +319,7 @@ def room(room_id):
             else:
                 result = f"{target}の役職は「{roles.get(target, '不明')}」"
             room['night_actions'][username] = result
-            msg = f"占い結果：{result}"
+            return redirect(url_for('room', room_id=room_id, from_='post'))
         # 怪盗の交換
         elif action == "kaitou" and roles.get(username, "") == "怪盗":
             target = request.form['kaitou_target']
@@ -329,7 +329,7 @@ def room(room_id):
             swapped_role = roles.get(target, "不明")
             result = f"{target}とカードを交換し、あなたの役職は「{swapped_role}」になりました。"
             room['night_actions'][username] = result
-            msg = result
+            return redirect(url_for('room', room_id=room_id, from_='post'))
     
     # 投票処理
     if request.method == "POST" and room['phase'] == "vote":
@@ -343,7 +343,7 @@ def room(room_id):
             else:
                 flash("既に投票済みです。")
         # POST-Redirect-GETでメッセージを保持
-        return redirect(url_for('room', room_id=room_id))
+        return redirect(url_for('room', room_id=room_id, from_='post'))
 
     night_time_left = get_night_time_left(room)
     day_time_left = get_day_time_left(room)
@@ -392,6 +392,22 @@ def post_red_chat(room_id):
     # チャットを保存
     room.setdefault('red_chat', []).append({'sender': username, 'text': text})
     return jsonify({'result': 'ok'})
+
+@app.route('/room/<room_id>/status', methods=['GET'])
+def room_status(room_id):
+    """
+    部屋の存在と現在のフェーズ、残り時間を返す軽量API
+    """
+    room = rooms.get(room_id)
+    if not room:
+        return jsonify({'ok': False, 'error': 'room not found'}), 404
+    return jsonify({
+        'ok': True,
+        'phase': room['phase'],
+        'night_time_left': get_night_time_left(room),
+        'day_time_left': get_day_time_left(room),
+        'vote_time_left': get_vote_time_left(room) if room['phase'] == 'vote' else 0
+    })
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
