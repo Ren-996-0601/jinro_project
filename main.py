@@ -245,7 +245,15 @@ def room(room_id):
     if 'username' not in session or 'room_id' not in session:
         return redirect(url_for('register'))
     if room_id not in rooms:
-        return 'ルームが見つかりません', 404
+        html = """
+        <!doctype html>
+        <meta charset="utf-8">
+        <p>接続中…（サーバの状態を確認しています）</p>
+        <script>
+            setTimeout(function(){ location.replace(location.href); }, 1000);
+        </script>
+        """
+        return html, 200
 
     room = rooms[room_id]
     roles = room.get('roles', {})
@@ -274,6 +282,7 @@ def room(room_id):
             room['night_start_time'] = time.time()  # 現在のUNIX時刻
             room['night_time'] = preset.get('night_time', 30)  # role_presets.pyから取得
             room['is_peace_village'] = all(role != "人狼" for role in room['roles'].values())
+            return redirect(url_for('room', room_id=room_id, from_='post'))
 
     
     # 夜フェーズ終了チェック
