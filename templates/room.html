@@ -99,13 +99,6 @@
             {% endif %}
         {% endif %}
 
-        <!-- 占い師の結果表示
-        {% if roles[session['username']] == "占い師" %}
-            {% if night_actions[session['username']] %}
-                <div><b>占い結果：</b>{{ night_actions[session['username']] }}</div>
-            {% endif %}
-        {% endif %} -->
-
         <!-- 怪盗の行動 -->
         {% if roles[session['username']] == "怪盗" %}
             {% if not night_actions[session['username']] %}
@@ -124,35 +117,6 @@
                 <div><b>交換結果：</b>{{ night_actions[session['username']] }}</div>
             {% endif %}
         {% endif %}
-
-        <!-- 怪盗の結果表示
-        {% if roles[session['username']] == "怪盗" %}
-            {% if night_actions[session['username']] %}
-                <div><b>交換結果：</b>{{ night_actions[session['username']] }}</div>
-            {% endif %}
-        {% endif %} -->
-
-        <!-- 人狼の相方表示と赤チャット
-        {% if roles[session['username']] == "人狼" %}
-            <h3>人狼の相方</h3>
-            <ul>
-                {% for member, role in roles.items() %}
-                    {% if member != session ['username'] and role == "人狼" %}
-                        <li>{{ member }}</li>
-                    {% endif %}
-                {% endfor %}
-            </ul>
-            <h3 style="color: red;">赤チャット</h3>
-            <div style="border: 1px solid #f00; padding:8px; margin-bottom:8px;">
-                {% for chat in red_chat %}
-                    <div style="color: red;"><b>{{ chat.sender }}:</b> {{ chat.text }}</div>
-                {% endfor %}
-            </div>
-            <form method="post">
-                <input type="text" name="red_chat_message" placeholder="赤チャットを入力" required>
-                <button type="submit" name="action" value="red_chat">送信</button>
-            </form>
-        {% endif %}-->
 
         {% if roles[session['username']] == "人狼" %}
             <h3>人狼の相方</h3>
