@@ -161,33 +161,45 @@ def room(room_id):
             room['is_peace_village'] = all(role != "人狼" for role in room['roles'].values())
             return redirect(url_for('room', room_id=room_id, from_='post'))
 
+    room.setdefault('transition_locked', False)
     
     # 夜フェーズ終了チェック
     if room['phase'] == "night":
-        if get_night_time_left(room) <= 0:
-            room['phase'] = "day"
-            room['day_start_time'] = time.time()
-            room['day_time'] = room['role_presets'].get('day_time', 60)
-            # 必要なら夜アクションの締め処理もここで
+        if get_night_time_left(room) <= 0 and not room['transition_locked']:
+            room['transition_locked'] = True
+            try:
+                room['phase'] = "day"
+                room['day_start_time'] = time.time()
+                room['day_time'] = room['role_presets'].get('day_time', 60)
+            finally:
+                room['transition_locked'] = False
     
     # 昼フェーズ終了チェック
-    if room['phase'] == "day" and get_day_time_left(room) <= 0:
-        room['phase'] = "vote"
-        room['vote_start_time'] = time.time()
-        room['vote_time'] = room['role_presets'].get('vote_time', 60)
-        room['votes'] = {}
+    if room['phase'] == "day" and get_day_time_left(room) <= 0 and not room['transition_locked']:
+        room['transition_locked'] = True
+        try:
+            room['phase'] = "vote"
+            room['vote_start_time'] = time.time()
+            room['vote_time'] = room['role_presets'].get('vote_time', 60)
+            room['votes'] = {}
+        finally:
+            room['transition_locked'] = False
     
     # 投票フェーズ終了チェック
-    if room['phase'] == "vote" and get_vote_time_left(room) <= 0:
-        force_kaitou_swap(room)
-        # ここで集計や結果表示用データを作成してもOK
-        # 怪盗の交換処理
-        for kaitou, target in room.get('kaitou_swaps', {}).items():
-            kaitou_exchange(room, kaitou, target)
-        force_vote(room)
-        tally_votes(room)
-        determine_result(room)
-        room['phase'] = "result"
+    if room['phase'] == "vote" and get_vote_time_left(room) <= 0 and not room['transition_locked']:
+        room['transition_locked'] = True
+        try:
+            force_kaitou_swap(room)
+            # ここで集計や結果表示用データを作成してもOK
+            # 怪盗の交換処理
+            for kaitou, target in room.get('kaitou_swaps', {}).items():
+                kaitou_exchange(room, kaitou, target)
+            force_vote(room)
+            tally_votes(room)
+            determine_result(room)
+            room['phase'] = "result"
+        finally:
+            room['transition_locked'] = False
         
     if request.method == 'POST' and room['phase'] == "night":
         roles = room.get('roles', {})  # 念のため再取得

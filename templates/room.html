@@ -9,6 +9,7 @@
   接続中…（画面切替を待っています）
 </div>
 <script>
+  let retryCount = 0;  
   function checkAndReload(roomId) {
     // 「接続中…」表示
     const statusEl = document.getElementById("connecting-status");
@@ -20,7 +21,7 @@
         return res.json();
       })
       .then(js => {
-        if (js.ok) {
+        if (js && js.ok) {
           // 状態OKなら画面リロード
           location.reload();
         } else {
@@ -28,8 +29,10 @@
         }
       })
       .catch(_ => {
+        retryCount++;
+        const wait = retryCount <= 3 ? 1000: 1500;
         // 少し待って再試行
-        setTimeout(() => checkAndReload(roomId), 1000);
+        setTimeout(() => checkAndReload(roomId), wait);
       });
   }
 </script>
@@ -76,7 +79,7 @@
                 }, 1000);
                 setTimeout(function(){
                     checkAndReload("{{ room_id }}");
-                }, (t_night + 1) * 1000);
+                }, Math.round((t_night + 1.5) * 1000));
             </script>
 
         <!-- 占い師の行動 -->
@@ -187,7 +190,7 @@
             }, 1000);
             setTimeout(function(){
                 checkAndReload("{{ room_id }}");
-            }, (t_day + 1) * 1000); // ディレイ込みで1回だけリロード
+            }, Math.round((t_day + 1.5) * 1000)); // ディレイ込みで1回だけリロード
         </script>
     {% endif %}
 
@@ -228,7 +231,7 @@
             }, 1000);
             setTimeout(function(){
                 checkAndReload("{{ room_id }}");
-            }, (t_vote + 1) * 1000);
+            }, Math.round((t_vote + 1.5) * 1000));
         </script>
     {% endif %}
 
